@@ -1,35 +1,68 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import { contractAddress, contractAbi } from "./constants/constants";
+import Login from "./components/Login";
+import Connected from "./components/Connected";
+import "./App.css";
+import { ethers } from "ethers";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [provider, setProvider] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", handleAccountsChanged);
+    }
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener(
+          "accountsChanged",
+          handleAccountsChanged
+        );
+      }
+    };
+  });
+
+  function handleAccountsChanged(accounts) {
+    if (accounts.length > 0 && account !== accounts[0]) {
+      setAccount(accounts[0]);
+    } else {
+      setIsConnected(false);
+      setAccount(null);
+    }
+  }
+
+  //function to connect wallet
+  async function connectWallet() {
+    if (window.ethereum) {
+      try {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        setProvider(provider);
+
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setAccount(address);
+        console.log("Metamask connected: " + address);
+        setIsConnected(true);
+      } catch (error) {
+        console.error(error);
+      }
+    } else {
+      console.error("Metamask is not installed");
+    }
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div>
+      {isConnected ? (
+        <Connected account={account} />
+      ) : (
+        <Login connectWallet={connectWallet} />
+      )}
+    </div>
+  );
+};
 
-export default App
+export default App;
