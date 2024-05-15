@@ -9,6 +9,8 @@ const App = () => {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [votingStatus, setVotingStatus] = useState(true);
+  const [remainingTime, setRemainingTime] = useState("");
 
   useEffect(() => {
     if (window.ethereum) {
@@ -23,6 +25,39 @@ const App = () => {
       }
     };
   });
+
+  //get candidates
+  async function getCandidates() {
+    
+  }
+
+  //get current status
+  async function getCurrentStatus() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstacne = new ethers.Contract(
+      contractAddress,
+      contractAbi,
+      signer
+    );
+    const status = await contractInstacne.getVotingStatus();
+    setVotingStatus(status);
+  }
+
+  //set the remaining time
+  async function getRemainingTime() {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const contractInstacne = new ethers.Contract(
+      contractAddress,
+      contractAbi,
+      signer
+    );
+    const time = await contractInstacne.getRemainingTime();
+    setRemainingTime(parseInt(time, 16));
+  }
 
   function handleAccountsChanged(accounts) {
     if (accounts.length > 0 && account !== accounts[0]) {
