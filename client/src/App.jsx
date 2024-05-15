@@ -11,8 +11,13 @@ const App = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [votingStatus, setVotingStatus] = useState(true);
   const [remainingTime, setRemainingTime] = useState("");
+  const [candidates, setCandidates] = useState([]);
+  const [number, setNumber] = useState("");
 
   useEffect(() => {
+    getCandidates();
+    getRemainingTime();
+    getCurrentStatus();
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", handleAccountsChanged);
     }
@@ -37,7 +42,14 @@ const App = () => {
       signer
     );
     const candidatesList = await contractInstacne.getAllVotesOfCandiates();
-    console.log(candidatesList);
+    const formattedCandidates = candidatesList.map((candidate, index) => {
+      return {
+        index: index,
+        name: candidate.name,
+        voteCount: candidate.voteCount.toNumber(),
+      };
+    });
+    setCandidates(formattedCandidates);
   }
 
   //get current status
@@ -51,6 +63,7 @@ const App = () => {
       signer
     );
     const status = await contractInstacne.getVotingStatus();
+    console.log(status);
     setVotingStatus(status);
   }
 
@@ -88,7 +101,6 @@ const App = () => {
         const signer = provider.getSigner();
         const address = await signer.getAddress();
         setAccount(address);
-        console.log("Metamask connected: " + address);
         setIsConnected(true);
       } catch (error) {
         console.error(error);
@@ -101,7 +113,12 @@ const App = () => {
   return (
     <div>
       {isConnected ? (
-        <Connected account={account} />
+        <Connected
+          account={account}
+          candidates={candidates}
+          remainingTime={remainingTime}
+          number={number}
+        />
       ) : (
         <Login connectWallet={connectWallet} />
       )}
