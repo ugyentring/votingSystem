@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
-import { contractAddress, contractAbi } from "./constants/constants";
+import { contractAddress } from "./constants/constants";
 import Login from "./components/Login";
 import Connected from "./components/Connected";
 import "./App.css";
 import { ethers } from "ethers";
+import abi from "./constants/Voting.json";
 
 const App = () => {
   const [provider, setProvider] = useState(null);
   const [account, setAccount] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [votingStatus, setVotingStatus] = useState(true);
-  const [remainingTime, setRemainingTime] = useState("");
+  const [remainingTime, setRemainingTime] = useState(0);
   const [candidates, setCandidates] = useState([]);
-  const [number, setNumber] = useState("");
+  const [number, setNumber] = useState(0);
+
+  const contractAbi = abi.abi;
 
   useEffect(() => {
     getCandidates();
@@ -29,7 +32,7 @@ const App = () => {
         );
       }
     };
-  });
+  }, []);
 
   //get candidates
   async function getCandidates() {
@@ -110,6 +113,10 @@ const App = () => {
     }
   }
 
+  function handleNumberChange(event) {
+    setNumber(parseInt(event.target.value));
+  }
+
   return (
     <div>
       {isConnected ? (
@@ -118,6 +125,7 @@ const App = () => {
           candidates={candidates}
           remainingTime={remainingTime}
           number={number}
+          handleNumberChange={handleNumberChange}
         />
       ) : (
         <Login connectWallet={connectWallet} />
